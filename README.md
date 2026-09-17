@@ -51,9 +51,26 @@ Skrypty pobierają dane same; alternatywnie wrzuć pliki do `pipeline/data/`.
 
 | Endpoint | Opis |
 |---|---|
-| `GET /api/puzzle?mode=daily\|practice` | para słów `{ start, target, date }` |
+| `GET /api/puzzle?mode=daily\|practice&pos=...` | para słów `{ start, target, date }` (filtr części mowy) |
 | `GET /api/words?q=przedrostek` | autouzupełnianie |
-| `POST /api/check` `{ word, existing[] }` | walidacja + najlepsze podobieństwo |
+| `POST /api/check` `{ word, existing[], pos[] }` | walidacja + podobieństwo do wszystkich słów |
+| `GET /api/health` | status, liczba słów/par, pamięć (do monitoringu) |
+
+## Wdrożenie (produkcja)
+
+Aplikacja potrzebuje ~90 MB danych (wektory + graf + JSON-y) i ~700 MB RAM.
+
+1. **VPS + Docker** (rekomendowane): zbuduj obraz (`npm run build` + dane w `pipeline/data/`),
+   uruchom `next start` na porcie 3000, postaw za Cloudflare (DNS + proxy).
+2. **Vercel**: limit 250 MB wystarcza, ale pliki danych muszą być w repo (zdjąć z `.gitignore`
+   `vectors.bin`, `neighbors60.bin`, `freq.json` i je skomitować).
+3. Monitoring: zewnętrzny uptime check na `https://symantyka.pl/api/health`.
+
+## SEO
+
+- `metadata` (OpenGraph, Twitter, canonical) w `src/app/layout.tsx`
+- `robots.ts`, `sitemap.ts`, `manifest.ts`, `opengraph-image.tsx`
+- JSON-LD (WebApplication + FAQPage) i treść FAQ w `src/app/page.tsx`
 
 ## Licencje danych
 

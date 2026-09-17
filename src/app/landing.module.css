@@ -1,0 +1,90 @@
+.wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 56px 20px 0;
+}
+
+.info {
+  margin-bottom: 40px;
+}
+
+.h2 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--accent-deep);
+  margin: 0 0 18px;
+}
+
+.steps {
+  margin: 0;
+  padding-left: 22px;
+  line-height: 1.7;
+}
+
+.steps li {
+  margin-bottom: 10px;
+}
+
+.lead {
+  margin-top: 22px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.faq {
+  border-top: 1px solid var(--line);
+}
+
+.faqItem {
+  border-bottom: 1px solid var(--line);
+}
+
+.faqItem summary {
+  cursor: pointer;
+  padding: 14px 6px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.faqItem summary:hover {
+  color: var(--accent);
+}
+
+.faqItem p {
+  margin: 0 6px 16px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+
+.footer {
+  margin-top: 30px;
+  border-top: 1px solid var(--line);
+  background: rgba(247, 243, 233, 0.85);
+}
+
+.footerInner {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.footerLinks {
+  display: flex;
+  gap: 8px;
+}
+
+.footerLinks a {
+  color: var(--accent-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.footerLinks a:hover {
+  color: var(--accent);
+}
