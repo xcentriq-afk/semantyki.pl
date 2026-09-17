@@ -1,0 +1,11 @@
+{
+  "main_module": "worker.js",
+  "compatibility_date": "2025-12-01",
+  "bindings": [
+    {
+      "type": "kv_namespace",
+      "name": "MONITOR",
+      "namespace_id": "340c71eb9f514778a372037d941981da"
+    }
+  ]
+}
