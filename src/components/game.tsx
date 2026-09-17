@@ -489,6 +489,7 @@ export default function Game() {
   const handleNodePointerDown = useCallback(
     (word: string, index: number) => (e: React.PointerEvent) => {
       if (won || !simRef.current) return;
+      if (e.button !== 0) return;
       const n = nodes[index];
       if (n.start || n.target) return;
       e.preventDefault();
@@ -841,14 +842,21 @@ export default function Game() {
                     className={styles.removeBtn}
                     transform={`translate(${w / 2 - 2}, ${-36})`}
                     role="button"
+                    tabIndex={0}
                     aria-label={`Usuń „${n.word}”`}
                     onPointerDown={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
                     }}
-                    onClick={(e) => {
+                    onPointerUp={(e) => {
                       e.stopPropagation();
                       removeWord(n.word);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.stopPropagation();
+                        removeWord(n.word);
+                      }
                     }}
                   >
                     <circle className={styles.removeBtnCircle} r={11} />

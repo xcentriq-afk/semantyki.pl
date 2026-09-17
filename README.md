@@ -66,7 +66,13 @@ docker compose up -d --build   # http://host:80 (compose mapuje 80:3000)
 ```
 `Dockerfile` (multi-stage, output standalone) + `docker-compose.yml` z healthcheckiem na
 `/api/health`. Uwaga: build wymaga obecności plików danych w `pipeline/data/` (są w `.gitignore`
-— zbuduj lokalnie na maszynie z danymi albo dodaj je do repo).
+— wgraj je osobno na maszynę z danymi).
+
+**Aktualizacja na serwerze (produkcja na VPS = git clone w `/opt/semantyki`):**
+```bash
+cd /opt/semantyki && git pull && docker compose up -d --build
+```
+Pliki danych (`pipeline/data/*`) leżą obok repo i `git pull` ich nie rusza.
 
 **Bez Dockera (VPS + Node):**
 ```bash

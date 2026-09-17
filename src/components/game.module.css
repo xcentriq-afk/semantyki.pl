@@ -136,23 +136,15 @@
 }
 
 .removeBtn {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
+  opacity: 0.55;
+  pointer-events: auto;
   cursor: pointer;
-  transition:
-    opacity 0.25s ease 1.2s,
-    visibility 0s linear 1.45s;
+  transition: opacity 0.15s ease;
 }
 
 .wordGroup:hover .removeBtn,
 .removeBtn:focus-visible {
   opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transition:
-    opacity 0.05s ease 0s,
-    visibility 0s linear 0s;
 }
 
 .removeBtnCircle {
@@ -175,15 +167,6 @@
 
 .removeBtn:hover .removeBtnCross {
   stroke: #fff;
-}
-
-@media (hover: none) {
-  .removeBtn {
-    opacity: 0.85;
-    visibility: visible;
-    pointer-events: auto;
-    transition: none;
-  }
 }
 
 .edge {
