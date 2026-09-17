@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-export const THRESHOLD = 0.35;
+export const THRESHOLD = 0.32;
 const DIM = 300;
 const W_SYN = 0.85;
 const W_HYP = 0.62;

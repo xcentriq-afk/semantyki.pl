@@ -18,7 +18,7 @@ gdy oba słowa docelowe znajdą się w jednym łańcuchu. Im mniej słów, tym l
   wspólny synonim (60%) **+ wspólni sąsiedzi wektorowi** (≥10 wspólnych sąsiadów
   top-60 i kosinus ≥ 0,40 → 56%, tylko słowa popularne) — dlatego „hala" łączy się
   z „pomieszczeniem", a „zarobek" z „pieniędzmi"
-- Próg połączenia: **0.35** (jak w oryginalnym Linxiconie; dobrany eksperymentalnie)
+- Próg połączenia: **0.32** (dobrany eksperymentalnie)
 - Pary dziennie: losowe pary połączone ścieżką 3–8 słów, weryfikowane BFS-em
 - Nowe słowo łączy się ze **wszystkimi** słowami powyżej progu (wiele krawędzi)
 - Formy pisane bez polskich znaków są akceptowane („zolw” → „żółw")

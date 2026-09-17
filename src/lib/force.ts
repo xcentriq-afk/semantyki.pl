@@ -1,4 +1,6 @@
 export interface SimNode {
+  word?: string;
+  floaty?: boolean;
   x: number;
   y: number;
   vx: number;
@@ -15,11 +17,11 @@ export function tick(
   h: number,
   pinned: number | null,
 ) {
-  const repulsion = 1500;
-  const springLen = Math.min(150, Math.max(95, w / 7));
-  const spring = 0.028;
+  const repulsion = 700;
+  const springLen = Math.min(130, Math.max(90, w / 8));
+  const spring = 0.05;
   const damping = 0.88;
-  const centerPull = 0.005;
+  const centerPull = 0.004;
 
   for (let i = 0; i < nodes.length; i++) {
     for (let j = i + 1; j < nodes.length; j++) {

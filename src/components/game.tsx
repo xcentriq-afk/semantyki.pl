@@ -73,6 +73,87 @@ const POS_GROUPS: { label: string; items: string[] }[] = [
   },
 ];
 
+interface Pt {
+  x: number;
+  y: number;
+}
+
+function hashWord(w: string): number {
+  let h = 7;
+  for (let i = 0; i < w.length; i++) h = (h * 31 + w.charCodeAt(i)) | 0;
+  return h;
+}
+
+function buildAdj(edges: Edge[]): Map<string, string[]> {
+  const adj = new Map<string, string[]>();
+  for (const e of edges) {
+    if (!adj.has(e.from)) adj.set(e.from, []);
+    if (!adj.has(e.to)) adj.set(e.to, []);
+    adj.get(e.from)!.push(e.to);
+    adj.get(e.to)!.push(e.from);
+  }
+  return adj;
+}
+
+function bfsDist(adj: Map<string, string[]>, from: string): Map<string, number> {
+  const dist = new Map<string, number>();
+  if (!from) return dist;
+  const queue = [from];
+  dist.set(from, 0);
+  while (queue.length) {
+    const cur = queue.shift()!;
+    for (const nb of adj.get(cur) ?? []) {
+      if (!dist.has(nb)) {
+        dist.set(nb, dist.get(cur)! + 1);
+        queue.push(nb);
+      }
+    }
+  }
+  return dist;
+}
+
+function semanticAnchor(
+  word: string,
+  dS: Map<string, number>,
+  dT: Map<string, number>,
+  w: number,
+  h: number,
+): Pt | null {
+  const startA = { x: w * 0.14, y: h * 0.2 };
+  const targetA = { x: w * 0.86, y: h * 0.8 };
+  const hsh = hashWord(word);
+  const jx = (hsh % 50) - 25;
+  const jy = ((hsh >> 5) % 50) - 25;
+  const cx = w / 2;
+  const cy = h / 2;
+  const ds = dS.get(word);
+  const dt = dT.get(word);
+  if (ds !== undefined && dt !== undefined) {
+    const t = ds / (ds + dt);
+    return {
+      x: startA.x + (targetA.x - startA.x) * t + jx,
+      y: startA.y + (targetA.y - startA.y) * t + jy,
+    };
+  }
+  if (ds !== undefined) {
+    const off = Math.min(ds, 5) * 50;
+    const len = Math.hypot(cx - startA.x, cy - startA.y) || 1;
+    return {
+      x: startA.x + ((cx - startA.x) / len) * off + jx,
+      y: startA.y + ((cy - startA.y) / len) * off + jy,
+    };
+  }
+  if (dt !== undefined) {
+    const off = Math.min(dt, 5) * 50;
+    const len = Math.hypot(cx - targetA.x, cy - targetA.y) || 1;
+    return {
+      x: targetA.x + ((cx - targetA.x) / len) * off + jx,
+      y: targetA.y + ((cy - targetA.y) / len) * off + jy,
+    };
+  }
+  return null;
+}
+
 function shortestChain(edges: Edge[], start: string, target: string): string[] {
   const adj = new Map<string, string[]>();
   for (const e of edges) {
@@ -252,6 +333,13 @@ export default function Game() {
     const prev = simRef.current;
     const clampX = (x: number) => Math.min(Math.max(x, 80), dims.w - 80);
     const clampY = (y: number) => Math.min(Math.max(y, 50), dims.h - 50);
+    const prevByWord = new Map<string, SimNode>();
+    if (prev) {
+      for (const s of prev.nodes) if (s.word) prevByWord.set(s.word, s);
+    }
+    const adj = buildAdj(edges);
+    const dS = bfsDist(adj, puzzle?.start ?? "");
+    const dT = bfsDist(adj, puzzle?.target ?? "");
     const floatyCount = nodes.filter(
       (n) =>
         !n.start &&
@@ -259,8 +347,8 @@ export default function Game() {
         !edges.some((e) => e.from === n.word || e.to === n.word),
     ).length;
     let floatIdx = 0;
-    const simNodes: SimNode[] = nodes.map((n, i) => {
-      const p = prev && i < prev.nodes.length ? prev.nodes[i] : null;
+    const simNodes: SimNode[] = nodes.map((n) => {
+      const p = prevByWord.get(n.word) ?? null;
       const isStart = !!n.start;
       const isTarget = !!n.target;
       const floaty =
@@ -273,30 +361,41 @@ export default function Game() {
       if (isStart) {
         anchorX = dims.w * 0.14;
         anchorY = dims.h * 0.2;
-        strength = 0.06;
+        strength = 0.1;
       } else if (isTarget) {
         anchorX = dims.w * 0.86;
         anchorY = dims.h * 0.8;
-        strength = 0.06;
-      } else if (p && p.anchorX !== null && p.anchorY !== null) {
-        anchorX = p.anchorX;
-        anchorY = p.anchorY;
-        strength = p.strength;
+        strength = 0.1;
       } else if (floaty) {
-        anchorX = Math.max(70, dims.w * 0.07);
-        anchorY =
-          dims.h * 0.2 +
-          dims.h * 0.6 * (floatIdx / Math.max(1, floatyCount - 1));
-        strength = 0.02;
-        floatIdx += 1;
+        if (p && p.floaty && p.anchorX !== null && p.anchorY !== null) {
+          anchorX = p.anchorX;
+          anchorY = p.anchorY;
+          strength = p.strength;
+        } else {
+          anchorX = Math.max(70, dims.w * 0.07);
+          anchorY =
+            dims.h * 0.2 +
+            dims.h * 0.6 * (floatIdx / Math.max(1, floatyCount - 1));
+          strength = 0.025;
+          floatIdx += 1;
+        }
       } else {
-        anchorX = null;
-        anchorY = null;
-        strength = 0;
+        const sem = semanticAnchor(n.word, dS, dT, dims.w, dims.h);
+        if (sem) {
+          anchorX = sem.x;
+          anchorY = sem.y;
+          strength = 0.03;
+        } else {
+          anchorX = null;
+          anchorY = null;
+          strength = 0;
+        }
       }
       const x = p ? clampX(p.x) : anchorX !== null ? anchorX : clampX(Math.random() * dims.w);
       const y = p ? clampY(p.y) : anchorY !== null ? anchorY : clampY(Math.random() * dims.h);
       return {
+        word: n.word,
+        floaty,
         x,
         y,
         vx: p ? p.vx * 0.4 : 0,
@@ -315,7 +414,7 @@ export default function Game() {
       .filter((e): e is [number, number] => e !== null);
     simRef.current = { nodes: simNodes, edges: simEdges };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes.length, edges, dims.w, dims.h]);
+  }, [nodes.length, edges, dims.w, dims.h, puzzle?.start, puzzle?.target]);
 
   useEffect(() => {
     let raf: number;
@@ -465,19 +564,18 @@ export default function Game() {
           return;
         }
         const matchList = data.matches ?? [];
-        const bestNode = matchList.length > 0
-          ? nodes.find((n) => n.word === matchList[0].word)
-          : data.best
-            ? nodes.find((n) => n.word === data.best!.word)
-            : null;
-        const newNode: BoardNode = {
-          word: w,
-          x: bestNode ? bestNode.x + (Math.random() - 0.5) * 60 : dims.w / 2 + (Math.random() - 0.5) * 120,
-          y: bestNode ? bestNode.y + (Math.random() - 0.5) * 60 : dims.h / 2 + (Math.random() - 0.5) * 120,
-        };
         const newEdges = matchList.length > 0
           ? [...edges, ...matchList.map((m) => ({ from: m.word, to: w, score: m.score }))]
           : edges;
+        const semAdj = buildAdj(newEdges);
+        const semDS = bfsDist(semAdj, puzzle.start);
+        const semDT = bfsDist(semAdj, puzzle.target);
+        const sem = semanticAnchor(w, semDS, semDT, dims.w, dims.h);
+        const newNode: BoardNode = {
+          word: w,
+          x: sem ? sem.x : dims.w / 2 + (Math.random() - 0.5) * 120,
+          y: sem ? sem.y : dims.h / 2 + (Math.random() - 0.5) * 120,
+        };
         const allWords = [...nodes.map((n) => n.word), w];
         const uf = new UnionFind(allWords);
         for (const e of newEdges) uf.union(e.from, e.to);
@@ -494,7 +592,7 @@ export default function Game() {
           showFeedback(`„${w}” łączy się z: ${names}.`);
         } else {
           const pct = data.best ? Math.round(data.best.score * 100) : 0;
-          const near = data.best ? ` Najbliższe: „${data.best.word}” (${pct}%, próg 35%).` : "";
+          const near = data.best ? ` Najbliższe: „${data.best.word}” (${pct}%, próg 32%).` : "";
           showFeedback(`Słowo wisi w próżni.${near} Możesz je odsunąć na bok.`, "warn");
         }
       } catch {
@@ -529,6 +627,27 @@ export default function Game() {
     setReadyKey(sel.join("+"));
     setShowPosModal(false);
   }, [posDraft]);
+
+  const removeWord = useCallback(
+    (word: string) => {
+      const n = nodes.find((x) => x.word === word);
+      if (!n || n.start || n.target) return;
+      if (dragRef.current?.word === word) {
+        dragRef.current = null;
+        setDragging(null);
+      }
+      const nextNodes = nodes.filter((x) => x.word !== word);
+      const nextEdges = edges.filter((e) => e.from !== word && e.to !== word);
+      setNodes(nextNodes);
+      setEdges(nextEdges);
+      if (puzzle) {
+        const uf = new UnionFind(nextNodes.map((x) => x.word));
+        for (const e of nextEdges) uf.union(e.from, e.to);
+        if (!uf.connected(puzzle.start, puzzle.target)) setWon(false);
+      }
+    },
+    [nodes, edges, puzzle],
+  );
 
   const share = useCallback(async () => {
     if (!puzzle) return;
@@ -691,7 +810,9 @@ export default function Game() {
                 key={n.word}
                 transform={`translate(${n.x}, ${n.y})`}
                 onPointerDown={draggable ? handleNodePointerDown(n.word, origIdx) : undefined}
-                className={draggable ? styles.draggable : undefined}
+                className={
+                  draggable ? `${styles.wordGroup} ${styles.draggable}` : styles.wordGroup
+                }
               >
                 {n.start && (
                   <text className={styles.nodeLabel} x={0} y={-32} textAnchor="middle">
@@ -707,6 +828,25 @@ export default function Game() {
                 <text className={styles.nodeText} x={0} y={5} textAnchor="middle">
                   {n.word}
                 </text>
+                {draggable && (
+                  <g
+                    className={styles.removeBtn}
+                    transform={`translate(${w / 2 - 2}, ${-36})`}
+                    role="button"
+                    aria-label={`Usuń „${n.word}”`}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeWord(n.word);
+                    }}
+                  >
+                    <circle className={styles.removeBtnCircle} r={11} />
+                    <path className={styles.removeBtnCross} d="M -4 -4 L 4 4 M 4 -4 L -4 4" />
+                  </g>
+                )}
               </g>
             );
           })}
@@ -716,7 +856,8 @@ export default function Game() {
       <footer className={styles.footer}>
         <div className={styles.hint}>
           Dopisz słowo, które znaczeniowo łączy się z którymś słowem na planszy — połączenie
-          powstaje od 35% podobieństwa. Słowa bez połączeń możesz przeciągnąć na bok.
+          powstaje od 32% podobieństwa. Słowa bez połączeń możesz przeciągnąć na bok lub usunąć
+          krzyżykiem (×).
         </div>
         <div className={styles.inputArea}>
           {matches.length > 0 && (

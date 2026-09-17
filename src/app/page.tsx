@@ -8,11 +8,11 @@ const FAQ = [
   },
   {
     q: "Skąd gra wie, że słowa są powiązane?",
-    a: "Podobieństwo wyliczamy z kilku źródeł: modelu językowego fastText wytrenowanego na miliardach polskich zdań, relacji słownikowych z polskiego Wikisłownika (synonimy, hiperonimy) oraz słownika skojarzeń. Połączenie powstaje, gdy łączne podobieństwo przekracza 35%.",
+    a: "Podobieństwo wyliczamy z kilku źródeł: modelu językowego fastText wytrenowanego na miliardach polskich zdań, relacji słownikowych z polskiego Wikisłownika (synonimy, hiperonimy) oraz słownika skojarzeń. Połączenie powstaje, gdy łączne podobieństwo przekracza 32%.",
   },
   {
     q: "Co oznacza procent przy słowach?",
-    a: "To siła powiązania znaczeniowego — od 0% (brak związku) do 100% (niemal synonimy). Próg połączenia wynosi 35%.",
+    a: "To siła powiązania znaczeniowego — od 0% (brak związku) do 100% (niemal synonimy). Próg połączenia wynosi 32%.",
   },
   {
     q: "Czym jest zagadka dnia?",
@@ -71,7 +71,7 @@ export default function Home() {
             </li>
             <li>
               Wpisz słowo, które znaczeniowo kojarzy się z którymś słowem na planszy. Jeśli
-              podobieństwo przekroczy 35%, powstanie połączenie.
+              podobieństwo przekroczy 32%, powstanie połączenie.
             </li>
             <li>
               Dopisuj kolejne wyrazy, budując most między startem a celem. Słowa bez połączeń
