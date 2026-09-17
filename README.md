@@ -58,13 +58,29 @@ Skrypty pobierają dane same; alternatywnie wrzuć pliki do `pipeline/data/`.
 
 ## Wdrożenie (produkcja)
 
-Aplikacja potrzebuje ~90 MB danych (wektory + graf + JSON-y) i ~700 MB RAM.
+Wymagania: ~250 MB RAM (produkcyjnie, standalone), ~150 MB dysku, Node.js 22. Bez bazy danych.
 
-1. **VPS + Docker** (rekomendowane): zbuduj obraz (`npm run build` + dane w `pipeline/data/`),
-   uruchom `next start` na porcie 3000, postaw za Cloudflare (DNS + proxy).
-2. **Vercel**: limit 250 MB wystarcza, ale pliki danych muszą być w repo (zdjąć z `.gitignore`
-   `vectors.bin`, `neighbors60.bin`, `freq.json` i je skomitować).
-3. Monitoring: zewnętrzny uptime check na `https://symantyka.pl/api/health`.
+**Docker (rekomendowane, dowolny VPS):**
+```bash
+docker compose up -d --build   # http://host:3000
+```
+`Dockerfile` (multi-stage, output standalone) + `docker-compose.yml` z healthcheckiem na
+`/api/health`. Uwaga: build wymaga obecności plików danych w `pipeline/data/` (są w `.gitignore`
+— zbuduj lokalnie na maszynie z danymi albo dodaj je do repo).
+
+**Bez Dockera (VPS + Node):**
+```bash
+npm ci && npm run build
+cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
+mkdir -p .next/standalone/pipeline/data
+cp pipeline/data/{words,vectors.bin,freq,synonyms,associations,pos,pairs}.json \
+   pipeline/data/neighbors60.bin .next/standalone/pipeline/data/
+cd .next/standalone && PORT=3000 HOSTNAME=0.0.0.0 node server.js
+```
+Dalej: domena `symantyka.pl` → Cloudflare (DNS + proxy), certyfikat SSL z Cloudflare.
+Monitoring: uptime check na `https://symantyka.pl/api/health`.
+
+Uwaga: hostingi współdzielone PHP (DirectAdmin itp.) NIE wystarczą — potrzebny VPS z SSH.
 
 ## SEO
 
