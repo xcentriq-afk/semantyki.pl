@@ -62,7 +62,7 @@ Wymagania: ~250 MB RAM (produkcyjnie, standalone), ~150 MB dysku, Node.js 22. Be
 
 **Docker (rekomendowane, dowolny VPS):**
 ```bash
-docker compose up -d --build   # http://host:3000
+docker compose up -d --build   # http://host:80 (compose mapuje 80:3000)
 ```
 `Dockerfile` (multi-stage, output standalone) + `docker-compose.yml` z healthcheckiem na
 `/api/health`. Uwaga: build wymaga obecności plików danych w `pipeline/data/` (są w `.gitignore`
