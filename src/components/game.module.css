@@ -139,13 +139,14 @@
   opacity: 0;
   pointer-events: none;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.2s ease 0.45s;
 }
 
 .wordGroup:hover .removeBtn,
 .removeBtn:focus-visible {
   opacity: 1;
   pointer-events: auto;
+  transition: opacity 0.05s ease 0s;
 }
 
 .removeBtnCircle {
