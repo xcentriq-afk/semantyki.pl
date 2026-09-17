@@ -80,7 +80,7 @@ cd .next/standalone && PORT=3000 HOSTNAME=0.0.0.0 node server.js
 Dalej: domena `semantyki.pl` → Cloudflare (DNS + proxy), certyfikat SSL z Cloudflare.
 Monitoring: uptime check na `https://semantyki.pl/api/health`.
 
-Monitoring działa na Cloudflare Workerze (`symantyka-monitor`, cron co 5 min) — alerty na
+Monitoring działa na Cloudflare Workerze (`semantyki-monitor`, cron co 5 min) — alerty na
 Discord. Kod i instrukcje: `monitoring/README.md`.
 
 Uwaga: hostingi współdzielone PHP (DirectAdmin itp.) NIE wystarczą — potrzebny VPS z SSH.
