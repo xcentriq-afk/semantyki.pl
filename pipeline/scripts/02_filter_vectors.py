@@ -47,7 +47,7 @@ with gzip.open(VEC_GZ, "rt", encoding="utf-8", errors="replace") as f:
             continue
         parts = line.rstrip("\n").split(" ")
         word = parts[0]
-        if word not in lemmas:
+        if len(word) < 3 or word not in lemmas:
             continue
         try:
             vec = np.fromstring(" ".join(parts[1:]), dtype=np.float32, sep=" ")

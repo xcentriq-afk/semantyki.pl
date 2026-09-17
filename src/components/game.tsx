@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { simulate, type SimNode } from "@/lib/force";
+import { tick, type SimNode } from "@/lib/force";
 import { UnionFind } from "@/lib/unionfind";
 import styles from "./game.module.css";
 
@@ -42,9 +42,36 @@ interface CheckResult {
   reason?: string;
   connected?: boolean;
   best?: { word: string; score: number } | null;
+  matches?: { word: string; score: number }[];
 }
 
-const storageKey = (mode: Mode) => `linxicon.pl:state:${mode}`;
+interface DragInfo {
+  index: number;
+  word: string;
+  ox: number;
+  oy: number;
+  px: number;
+  py: number;
+}
+
+const storageKey = (mode: Mode) => `symantyka.pl:state:${mode}`;
+const storageKeyPractice = (pos: string[]) =>
+  `symantyka.pl:state:practice:${pos.join("+")}`;
+const posStorageKey = "symantyka.pl:pos";
+const edgeKey = (a: string, b: string) => [a, b].sort().join("|");
+
+const DEFAULT_POS = ["rzeczownik", "przymiotnik"];
+
+const POS_GROUPS: { label: string; items: string[] }[] = [
+  {
+    label: "Odmienne",
+    items: ["rzeczownik", "przymiotnik", "czasownik", "liczebnik", "zaimek"],
+  },
+  {
+    label: "Nieodmienne",
+    items: ["przysłówek", "przyimek", "spójnik", "wykrzyknik", "partykuła"],
+  },
+];
 
 function shortestChain(edges: Edge[], start: string, target: string): string[] {
   const adj = new Map<string, string[]>();
@@ -89,16 +116,61 @@ export default function Game() {
   const [feedback, setFeedback] = useState<{ text: string; kind: "info" | "warn" } | null>(null);
   const [dims, setDims] = useState({ w: 800, h: 560 });
   const [now, setNow] = useState(() => Date.now());
+  const [dragging, setDragging] = useState<string | null>(null);
+  const [posSelection, setPosSelection] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(posStorageKey);
+      if (saved) return JSON.parse(saved) as string[];
+    } catch {
+      /* ignore */
+    }
+    return DEFAULT_POS;
+  });
+  const [readyKey, setReadyKey] = useState("");
+  const [showPosModal, setShowPosModal] = useState(false);
+  const [posDraft, setPosDraft] = useState<string[]>(DEFAULT_POS);
 
   const boardRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const simRef = useRef<{ nodes: SimNode[]; edges: [number, number][] } | null>(null);
+  const dragRef = useRef<DragInfo | null>(null);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showFeedback = useCallback((text: string, kind: "info" | "warn" = "info") => {
     setFeedback({ text, kind });
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
     feedbackTimer.current = setTimeout(() => setFeedback(null), 3200);
   }, []);
+
+  const isFloating = useCallback(
+    (word: string) => {
+      const n = nodes.find((x) => x.word === word);
+      if (!n || n.start || n.target) return false;
+      return !edges.some((e) => e.from === word || e.to === word);
+    },
+    [nodes, edges],
+  );
+
+  const flushSave = useCallback(() => {
+    const s = simRef.current;
+    if (!puzzle) return;
+    const key = mode === "practice" ? storageKeyPractice(posSelection) : storageKey(mode);
+    const state: SavedState = {
+      start: puzzle.start,
+      target: puzzle.target,
+      date: puzzle.date,
+      nodes: nodes.map((n, i) => ({
+        ...n,
+        x: s ? s.nodes[i].x : n.x,
+        y: s ? s.nodes[i].y : n.y,
+      })),
+      edges,
+      won,
+    };
+    localStorage.setItem(key, JSON.stringify(state));
+  }, [puzzle, nodes, edges, won, mode, posSelection]);
 
   useEffect(() => {
     const el = boardRef.current;
@@ -115,49 +187,125 @@ export default function Game() {
     return () => clearInterval(t);
   }, []);
 
-  const fetchPuzzle = useCallback(async (m: Mode, fresh: boolean) => {
-    if (!fresh) {
-      const saved = localStorage.getItem(storageKey(m));
-      if (saved) {
-        try {
-          const state = JSON.parse(saved) as SavedState;
-          setPuzzle({ start: state.start, target: state.target, date: state.date });
-          setNodes(state.nodes);
-          setEdges(state.edges);
-          setWon(state.won);
-          return;
-        } catch {
-          /* ignore corrupted state */
+  const fetchPuzzle = useCallback(
+    async (m: Mode, fresh: boolean, pos: string[]) => {
+      const key = m === "practice" ? storageKeyPractice(pos) : storageKey(m);
+      if (!fresh) {
+        const saved = localStorage.getItem(key);
+        if (saved) {
+          try {
+            const state = JSON.parse(saved) as SavedState;
+            setPuzzle({ start: state.start, target: state.target, date: state.date });
+            setNodes(state.nodes);
+            setEdges(state.edges);
+            setWon(state.won);
+            return;
+          } catch {
+            /* ignore corrupted state */
+          }
         }
       }
+      const q =
+        m === "practice"
+          ? `?mode=practice&pos=${encodeURIComponent(pos.join(","))}`
+          : "?mode=daily";
+      const res = await fetch(`/api/puzzle${q}`);
+      if (!res.ok) {
+        const err = (await res.json().catch(() => null)) as { error?: string } | null;
+        if (err?.error === "no-pairs") {
+          showFeedback("Brak zagadek dla wybranej kombinacji części mowy.", "warn");
+          setPuzzle(null);
+          setNodes([]);
+          setEdges([]);
+          return;
+        }
+      }
+      const data = (await res.json()) as Puzzle;
+      setPuzzle(data);
+      setNodes([
+        { word: data.start, start: true, x: 0, y: 0 },
+        { word: data.target, target: true, x: 0, y: 0 },
+      ]);
+      setEdges([]);
+      setWon(false);
+      localStorage.removeItem(key);
+    },
+    [showFeedback],
+  );
+
+  useEffect(() => {
+    if (mode === "daily") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch
+      void fetchPuzzle("daily", false, DEFAULT_POS);
+      return;
     }
-    const res = await fetch(`/api/puzzle?mode=${m}`);
-    const data = (await res.json()) as Puzzle;
-    setPuzzle(data);
-    setNodes([
-      { word: data.start, start: true, x: 0, y: 0 },
-      { word: data.target, target: true, x: 0, y: 0 },
-    ]);
-    setEdges([]);
-    setWon(false);
-    localStorage.removeItem(storageKey(m));
-  }, []);
+    const key = posSelection.join("+");
+    if (readyKey !== key) {
+      setPosDraft(posSelection);
+      setShowPosModal(true);
+      return;
+    }
+    void fetchPuzzle("practice", false, posSelection);
+  }, [mode, readyKey, posSelection, fetchPuzzle]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch
-    void fetchPuzzle(mode, false);
-  }, [mode, fetchPuzzle]);
-
-  useEffect(() => {
-    if (!puzzle || nodes.length === 0) return;
-    const simNodes: SimNode[] = nodes.map((n) => ({
-      x: n.x || Math.random() * dims.w,
-      y: n.y || Math.random() * dims.h,
-      vx: 0,
-      vy: 0,
-      anchorX: n.start ? dims.w * 0.16 : n.target ? dims.w * 0.84 : null,
-      anchorY: n.start ? dims.h * 0.22 : n.target ? dims.h * 0.78 : null,
-    }));
+    const prev = simRef.current;
+    const clampX = (x: number) => Math.min(Math.max(x, 80), dims.w - 80);
+    const clampY = (y: number) => Math.min(Math.max(y, 50), dims.h - 50);
+    const floatyCount = nodes.filter(
+      (n) =>
+        !n.start &&
+        !n.target &&
+        !edges.some((e) => e.from === n.word || e.to === n.word),
+    ).length;
+    let floatIdx = 0;
+    const simNodes: SimNode[] = nodes.map((n, i) => {
+      const p = prev && i < prev.nodes.length ? prev.nodes[i] : null;
+      const isStart = !!n.start;
+      const isTarget = !!n.target;
+      const floaty =
+        !isStart &&
+        !isTarget &&
+        !edges.some((e) => e.from === n.word || e.to === n.word);
+      let anchorX: number | null;
+      let anchorY: number | null;
+      let strength: number;
+      if (isStart) {
+        anchorX = dims.w * 0.14;
+        anchorY = dims.h * 0.2;
+        strength = 0.06;
+      } else if (isTarget) {
+        anchorX = dims.w * 0.86;
+        anchorY = dims.h * 0.8;
+        strength = 0.06;
+      } else if (p && p.anchorX !== null && p.anchorY !== null) {
+        anchorX = p.anchorX;
+        anchorY = p.anchorY;
+        strength = p.strength;
+      } else if (floaty) {
+        anchorX = Math.max(70, dims.w * 0.07);
+        anchorY =
+          dims.h * 0.2 +
+          dims.h * 0.6 * (floatIdx / Math.max(1, floatyCount - 1));
+        strength = 0.02;
+        floatIdx += 1;
+      } else {
+        anchorX = null;
+        anchorY = null;
+        strength = 0;
+      }
+      const x = p ? clampX(p.x) : anchorX !== null ? anchorX : clampX(Math.random() * dims.w);
+      const y = p ? clampY(p.y) : anchorY !== null ? anchorY : clampY(Math.random() * dims.h);
+      return {
+        x,
+        y,
+        vx: p ? p.vx * 0.4 : 0,
+        vy: p ? p.vy * 0.4 : 0,
+        anchorX,
+        anchorY,
+        strength,
+      };
+    });
     const simEdges: [number, number][] = edges
       .map((e) => {
         const a = nodes.findIndex((n) => n.word === e.from);
@@ -165,24 +313,114 @@ export default function Game() {
         return a >= 0 && b >= 0 ? ([a, b] as [number, number]) : null;
       })
       .filter((e): e is [number, number] => e !== null);
-    simulate(simNodes, simEdges, dims.w, dims.h);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- layout positions derived from graph topology
-    setNodes((prev) => prev.map((n, i) => ({ ...n, x: simNodes[i].x, y: simNodes[i].y })));
+    simRef.current = { nodes: simNodes, edges: simEdges };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes.length, edges, dims.w, dims.h]);
 
   useEffect(() => {
-    if (!puzzle || nodes.length === 0) return;
-    const state: SavedState = {
-      start: puzzle.start,
-      target: puzzle.target,
-      date: puzzle.date,
-      nodes,
-      edges,
-      won,
+    let raf: number;
+    const step = () => {
+      const sim = simRef.current;
+      if (sim) {
+        const drag = dragRef.current;
+        if (drag) {
+          const n = sim.nodes[drag.index];
+          n.x = drag.px;
+          n.y = drag.py;
+          n.vx = 0;
+          n.vy = 0;
+          tick(sim.nodes, sim.edges, dims.w, dims.h, drag.index);
+        } else {
+          tick(sim.nodes, sim.edges, dims.w, dims.h, null);
+        }
+        setNodes((prev) =>
+          prev.map((n, i) => {
+            const s = sim.nodes[i];
+            if (!s) return n;
+            return n.x === s.x && n.y === s.y ? n : { ...n, x: s.x, y: s.y };
+          }),
+        );
+      }
+      raf = requestAnimationFrame(step);
     };
-    localStorage.setItem(storageKey(mode), JSON.stringify(state));
-  }, [puzzle, nodes, edges, won, mode]);
+    raf = requestAnimationFrame(step);
+    return () => {
+      cancelAnimationFrame(raf);
+    };
+  }, [dims.w, dims.h]);
+
+  useEffect(() => {
+    const onHide = () => flushSave();
+    window.addEventListener("pagehide", onHide);
+    document.addEventListener("visibilitychange", onHide);
+    return () => {
+      window.removeEventListener("pagehide", onHide);
+      document.removeEventListener("visibilitychange", onHide);
+    };
+  }, [flushSave]);
+
+  useEffect(() => {
+    if (!puzzle || nodes.length === 0) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(flushSave, 500);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [puzzle, edges, won, nodes.length, mode, posSelection]);
+
+  const toBoard = useCallback(
+    (e: React.PointerEvent) => {
+      const svg = svgRef.current;
+      if (!svg) return { x: 0, y: 0 };
+      const rect = svg.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (dims.w / rect.width),
+        y: (e.clientY - rect.top) * (dims.h / rect.height),
+      };
+    },
+    [dims],
+  );
+
+  const handleNodePointerDown = useCallback(
+    (word: string, index: number) => (e: React.PointerEvent) => {
+      if (won || !simRef.current) return;
+      const n = nodes[index];
+      if (n.start || n.target) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const p = toBoard(e);
+      const sim = simRef.current.nodes[index];
+      dragRef.current = { index, word, ox: p.x - sim.x, oy: p.y - sim.y, px: p.x, py: p.y };
+      setDragging(word);
+      svgRef.current?.setPointerCapture?.(e.pointerId);
+    },
+    [won, nodes, toBoard],
+  );
+
+  const handleBoardPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      const p = toBoard(e);
+      drag.px = p.x - drag.ox;
+      drag.py = p.y - drag.oy;
+    },
+    [toBoard],
+  );
+
+  const handleBoardPointerUp = useCallback(() => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    dragRef.current = null;
+    setDragging(null);
+    const sim = simRef.current;
+    if (!sim) return;
+    const n = sim.nodes[drag.index];
+    const connected = edges.some((e) => e.from === drag.word || e.to === drag.word);
+    if (!connected) {
+      n.anchorX = n.x;
+      n.anchorY = n.y;
+      n.strength = 0.015;
+    }
+  }, [edges]);
 
   const handleInput = useCallback(async (value: string) => {
     setInput(value);
@@ -208,27 +446,37 @@ export default function Game() {
       }
       setBusy(true);
       try {
+        const pos = mode === "daily" ? DEFAULT_POS : posSelection;
         const res = await fetch("/api/check", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ word: w, existing: nodes.map((n) => n.word) }),
+          body: JSON.stringify({ word: w, existing: nodes.map((n) => n.word), pos }),
         });
         const data = (await res.json()) as CheckResult;
         if (!data.ok) {
-          showFeedback(
-            data.reason === "not-found" ? `Nie znam słowa „${w}”.` : "Nieprawidłowe słowo.",
-            "warn",
-          );
+          if (data.reason === "pos") {
+            showFeedback("To słowo nie pasuje do wybranych części mowy.", "warn");
+          } else {
+            showFeedback(
+              data.reason === "not-found" ? `Nie znam słowa „${w}”.` : "Nieprawidłowe słowo.",
+              "warn",
+            );
+          }
           return;
         }
-        const bestNode = data.best ? nodes.find((n) => n.word === data.best!.word) : null;
+        const matchList = data.matches ?? [];
+        const bestNode = matchList.length > 0
+          ? nodes.find((n) => n.word === matchList[0].word)
+          : data.best
+            ? nodes.find((n) => n.word === data.best!.word)
+            : null;
         const newNode: BoardNode = {
           word: w,
           x: bestNode ? bestNode.x + (Math.random() - 0.5) * 60 : dims.w / 2 + (Math.random() - 0.5) * 120,
           y: bestNode ? bestNode.y + (Math.random() - 0.5) * 60 : dims.h / 2 + (Math.random() - 0.5) * 120,
         };
-        const newEdges = data.connected && data.best
-          ? [...edges, { from: data.best.word, to: w, score: data.best.score }]
+        const newEdges = matchList.length > 0
+          ? [...edges, ...matchList.map((m) => ({ from: m.word, to: w, score: m.score }))]
           : edges;
         const allWords = [...nodes.map((n) => n.word), w];
         const uf = new UnionFind(allWords);
@@ -238,10 +486,16 @@ export default function Game() {
         setEdges(newEdges);
         if (connectedNow) {
           setWon(true);
-        } else if (data.connected) {
-          showFeedback(`„${w}” łączy się z „${data.best!.word}”.`);
+        } else if (matchList.length > 0) {
+          const names = matchList
+            .slice(0, 3)
+            .map((m) => `„${m.word}” (${Math.round(m.score * 100)}%)`)
+            .join(", ");
+          showFeedback(`„${w}” łączy się z: ${names}.`);
         } else {
-          showFeedback("Słowo wisi w próżni — brak wystarczającego powiązania z planszą.", "warn");
+          const pct = data.best ? Math.round(data.best.score * 100) : 0;
+          const near = data.best ? ` Najbliższe: „${data.best.word}” (${pct}%, próg 35%).` : "";
+          showFeedback(`Słowo wisi w próżni.${near} Możesz je odsunąć na bok.`, "warn");
         }
       } catch {
         showFeedback("Błąd połączenia z serwerem.", "warn");
@@ -252,20 +506,35 @@ export default function Game() {
         inputRef.current?.focus();
       }
     },
-    [busy, won, puzzle, nodes, edges, dims, showFeedback],
+    [busy, won, puzzle, nodes, edges, dims, showFeedback, mode, posSelection],
   );
 
   const newGame = useCallback(() => {
-    void fetchPuzzle("practice", true);
-    setWon(false);
-    inputRef.current?.focus();
-  }, [fetchPuzzle]);
+    setPosDraft(posSelection);
+    setShowPosModal(true);
+  }, [posSelection]);
+
+  const togglePos = useCallback((p: string) => {
+    setPosDraft((prev) =>
+      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p],
+    );
+  }, []);
+
+  const confirmPosModal = useCallback(() => {
+    if (posDraft.length === 0) return;
+    const sel = [...posDraft].sort();
+    localStorage.setItem(posStorageKey, JSON.stringify(sel));
+    localStorage.removeItem(storageKeyPractice(sel));
+    setPosSelection(sel);
+    setReadyKey(sel.join("+"));
+    setShowPosModal(false);
+  }, [posDraft]);
 
   const share = useCallback(async () => {
     if (!puzzle) return;
     const chain = shortestChain(edges, puzzle.start, puzzle.target);
     const text =
-      `LINXICON PL · ${puzzle.date}\n` +
+      `SYMANTYKA.pl · ${puzzle.date}\n` +
       `Słowa pomostowe: ${Math.max(0, nodes.length - 2)}\n` +
       (chain.length > 0 ? `Łańcuch: ${chain.join(" → ")}` : "");
     try {
@@ -312,12 +581,27 @@ export default function Game() {
     return map;
   }, [nodes]);
 
+  const winEdgeKeys = useMemo(() => {
+    if (!won || !puzzle) return new Set<string>();
+    const chain = shortestChain(edges, puzzle.start, puzzle.target);
+    const s = new Set<string>();
+    for (let i = 0; i < chain.length - 1; i++) s.add(edgeKey(chain[i], chain[i + 1]));
+    return s;
+  }, [won, puzzle, edges]);
+
+  const orderedNodes = useMemo(() => {
+    if (!dragging) return nodes;
+    const d = nodes.find((n) => n.word === dragging);
+    const rest = nodes.filter((n) => n.word !== dragging);
+    return d ? [...rest, d] : nodes;
+  }, [nodes, dragging]);
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
         <div className={styles.brandRow}>
           <h1 className={styles.brand}>
-            LINXICON<span className={styles.brandAccent}>PL</span>
+            SYMANTYKA<span className={styles.brandAccent}>.pl</span>
           </h1>
           <p className={styles.tagline}>Połącz dwa słowa łańcuchem znaczeń.</p>
         </div>
@@ -352,7 +636,14 @@ export default function Game() {
       </header>
 
       <div className={styles.boardWrap} ref={boardRef}>
-        <svg className={styles.board} viewBox={`0 0 ${dims.w} ${dims.h}`}>
+        <svg
+          ref={svgRef}
+          className={styles.board}
+          viewBox={`0 0 ${dims.w} ${dims.h}`}
+          onPointerMove={handleBoardPointerMove}
+          onPointerUp={handleBoardPointerUp}
+          onPointerCancel={handleBoardPointerUp}
+        >
           {edges.map((e, i) => {
             const a = nodeById.get(e.from);
             const b = nodeById.get(e.to);
@@ -366,21 +657,42 @@ export default function Game() {
             const cx = mx - (dy / len) * bow;
             const cy = my + (dx / len) * bow;
             const intensity = Math.min(1, Math.max(0.25, (e.score - 0.45) / 0.3));
+            const isWin = winEdgeKeys.has(edgeKey(e.from, e.to));
+            const cls = [
+              styles.edge,
+              i === edges.length - 1 && !isWin ? styles.edgeNew : "",
+              isWin ? styles.edgeWin : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
             return (
               <path
                 key={`${e.from}-${e.to}`}
                 d={`M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`}
-                className={i === edges.length - 1 ? styles.edgeNew : styles.edge}
-                style={{ opacity: intensity }}
+                className={cls}
+                style={{ opacity: isWin ? 1 : won ? 0.35 : intensity }}
                 fill="none"
               />
             );
           })}
-          {nodes.map((n) => {
+          {orderedNodes.map((n) => {
             const w = n.word.length * 8.8 + 30;
-            const cls = n.start || n.target ? styles.nodeAnchor : styles.node;
+            const floaty = isFloating(n.word);
+            const cls =
+              n.start || n.target
+                ? styles.nodeAnchor
+                : floaty
+                  ? styles.nodeFloating
+                  : styles.node;
+            const draggable = !n.start && !n.target;
+            const origIdx = nodes.findIndex((x) => x.word === n.word);
             return (
-              <g key={n.word} transform={`translate(${n.x}, ${n.y})`}>
+              <g
+                key={n.word}
+                transform={`translate(${n.x}, ${n.y})`}
+                onPointerDown={draggable ? handleNodePointerDown(n.word, origIdx) : undefined}
+                className={draggable ? styles.draggable : undefined}
+              >
                 {n.start && (
                   <text className={styles.nodeLabel} x={0} y={-32} textAnchor="middle">
                     start
@@ -403,7 +715,8 @@ export default function Game() {
 
       <footer className={styles.footer}>
         <div className={styles.hint}>
-          Dopisz słowo, które znaczeniowo łączy się z którymś słowem na planszy.
+          Dopisz słowo, które znaczeniowo łączy się z którymś słowem na planszy — połączenie
+          powstaje od 35% podobieństwa. Słowa bez połączeń możesz przeciągnąć na bok.
         </div>
         <div className={styles.inputArea}>
           {matches.length > 0 && (
@@ -477,6 +790,52 @@ export default function Game() {
             {mode === "daily" && (
               <p className={styles.winCountdown}>Następna zagadka za {countdown}</p>
             )}
+          </div>
+        </div>
+      )}
+
+      {showPosModal && (
+        <div className={styles.overlay}>
+          <div className={styles.card}>
+            <h2 className={styles.posTitle}>Wybierz części mowy</h2>
+            <p className={styles.posHint}>
+              Dopuszczalne będą tylko słowa z zaznaczonych kategorii.
+            </p>
+            {POS_GROUPS.map((g) => (
+              <div key={g.label} className={styles.posGroup}>
+                <div className={styles.posGroupLabel}>{g.label}</div>
+                <div className={styles.posItems}>
+                  {g.items.map((p) => (
+                    <label key={p} className={styles.posItem}>
+                      <input
+                        type="checkbox"
+                        checked={posDraft.includes(p)}
+                        onChange={() => togglePos(p)}
+                      />
+                      <span>{p}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <div className={styles.winActions}>
+              <button
+                className={styles.primaryBtn}
+                disabled={posDraft.length === 0}
+                onClick={confirmPosModal}
+              >
+                Rozpocznij
+              </button>
+              <button
+                className={styles.ghostBtn}
+                onClick={() => {
+                  setShowPosModal(false);
+                  setMode("daily");
+                }}
+              >
+                Anuluj
+              </button>
+            </div>
           </div>
         </div>
       )}

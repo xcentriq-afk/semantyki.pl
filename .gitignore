@@ -46,11 +46,16 @@ next-env.d.ts
 /pipeline/data/vectors.bin
 /pipeline/data/vectors_raw.bin
 /pipeline/data/topk.npz
+/pipeline/data/neighbors60.bin
+/pipeline/data/pass1.npz
 /pipeline/data/lemmas.txt
 /pipeline/data/freq.json
 /pipeline/data/pair_paths.json
+/pipeline/data/associations.partial.json
+/pipeline/data/plwordnet_3_0.7z
 /pipeline/data/sample_*.txt
 /pipeline/data/msimlex/
 /pipeline/data/MSimLex999_Polish.zip
 /pipeline/data/download-*.log
 /pipeline/data/review_samples.md
+__pycache__/

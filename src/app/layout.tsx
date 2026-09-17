@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "LINXICON PL — połącz słowa łańcuchem znaczeń",
+  title: "SYMANTYKA.pl — połącz słowa łańcuchem znaczeń",
   description:
     "Gra słowna: połącz dwa losowe polskie słowa, dopisując wyrazy powiązane znaczeniowo. Codzienna zagadka i tryb treningowy.",
 };
