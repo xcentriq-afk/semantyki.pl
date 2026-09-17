@@ -1,6 +1,6 @@
 # Monitoring (Cloudflare Worker)
 
-Worker sprawdza co 5 minut `https://symantyka.pl/api/health` (cron `*/5 * * * *`).
+Worker sprawdza co 5 minut `https://semantyki.pl/api/health` (cron `*/5 * * * *`).
 Przy 2 kolejnych awariach wysyła alert na Discord (webhook w Workers Secrets jako `DISCORD_WEBHOOK`).
 Licznik awarii trzymany w KV (binding `MONITOR`, namespace `symantyka-monitor`).
 

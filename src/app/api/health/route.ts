@@ -10,7 +10,7 @@ export async function GET() {
   const mem = process.memoryUsage();
   return Response.json({
     status: "ok",
-    service: "symantyka.pl",
+    service: "semantyki.pl",
     time: new Date().toISOString(),
     words: lex.words.length,
     pairs: pairs.length,

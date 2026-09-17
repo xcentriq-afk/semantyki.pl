@@ -11,7 +11,7 @@ export default {
 };
 
 const URLS = {
-  domain: "https://symantyka.pl/api/health",
+  domain: "https://semantyki.pl/api/health",
   origin: "http://57.128.224.181/api/health",
 };
 
@@ -19,7 +19,7 @@ async function probe(url) {
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(10000),
-      headers: { "user-agent": "symantyka-monitor/1.0" },
+      headers: { "user-agent": "semantyki-monitor/1.0" },
     });
     const body = await res.json();
     if (res.ok && body.status === "ok") {
@@ -53,7 +53,7 @@ async function runCheck(env) {
   if (domain.ok) {
     if (streak >= 2) {
       await notify(env, {
-        title: "SYMANTYKA.pl wróciła online",
+        title: "SEMANTYKI.pl wróciła online",
         color: 0x2ecc71,
         desc: `Serwis odpowiada poprawnie. ${domain.detail}`,
       });
@@ -66,7 +66,7 @@ async function runCheck(env) {
     await env.MONITOR.put(key, String(streak)).catch(() => {});
     if (streak === 2) {
       await notify(env, {
-        title: "SYMANTYKA.pl: problem z domeną/proxy (origin OK)",
+        title: "SEMANTYKI.pl: problem z domeną/proxy (origin OK)",
         color: 0xf1c40f,
         desc: `Domena: ${domain.detail}\nOrigin (bezpośrednio): OK`,
       });
@@ -77,7 +77,7 @@ async function runCheck(env) {
     await env.MONITOR.put(key, String(streak)).catch(() => {});
     if (streak === 2) {
       await notify(env, {
-        title: "SYMANTYKA.pl NIE ODPOWIADA",
+        title: "SEMANTYKI.pl NIE ODPOWIADA",
         color: 0xe74c3c,
         desc: `Domena: ${domain.detail}\nOrigin: ${origin ? origin.detail : "nie sprawdzono"}`,
       });
@@ -96,7 +96,7 @@ async function notify(env, { title, color, desc }) {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        username: "SYMANTYKA.pl Monitor",
+        username: "SEMANTYKI.pl Monitor",
         embeds: [
           {
             title,

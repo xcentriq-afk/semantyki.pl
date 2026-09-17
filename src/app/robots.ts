@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: "https://symantyka.pl/sitemap.xml",
-    host: "https://symantyka.pl",
+    sitemap: "https://semantyki.pl/sitemap.xml",
+    host: "https://semantyki.pl",
   };
 }

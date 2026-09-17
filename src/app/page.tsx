@@ -33,8 +33,8 @@ const jsonLd = {
   "@graph": [
     {
       "@type": "WebApplication",
-      name: "SYMANTYKA.pl",
-      url: "https://symantyka.pl",
+      name: "SEMANTYKI.pl",
+      url: "https://semantyki.pl",
       applicationCategory: "GameApplication",
       inLanguage: "pl",
       description:
@@ -83,7 +83,7 @@ export default function Home() {
             </li>
           </ol>
           <p className={styles.lead}>
-            SYMANTYKA.pl to polska gra słowna online, w której nie liczy się ortografia, lecz
+            SEMANTYKI.pl to polska gra słowna online, w której nie liczy się ortografia, lecz
             znaczenie. Zamiast zgadywać litery, budujesz <strong>łańcuchy skojarzeń</strong> —
             od „deszczu&rdquo; przez „parasol&rdquo; aż po „muzykę&rdquo;. Codziennie nowa zagadka dla wszystkich,
             a w treningu nielimitowane pary i wybór części mowy. Zagraj teraz — za darmo, bez
@@ -105,7 +105,7 @@ export default function Home() {
       </main>
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
-          <span>© {new Date().getFullYear()} SYMANTYKA.pl — polska gra słowna</span>
+          <span>© {new Date().getFullYear()} SEMANTYKI.pl — polska gra słowna</span>
           <span className={styles.footerLinks}>
             <a
               href="https://creativecommons.org/licenses/by-sa/3.0/"

@@ -1,4 +1,4 @@
-# SYMANTYKA.pl
+# SEMANTYKI.pl
 
 Polska gra słowna inspirowana **Linxicon**: połącz dwa losowe słowa łańcuchem
 wyrazów powiązanych znaczeniowo. Dopisujesz słowa — jeśli nowe słowo jest
@@ -77,8 +77,8 @@ cp pipeline/data/{words,vectors.bin,freq,synonyms,associations,pos,pairs}.json \
    pipeline/data/neighbors60.bin .next/standalone/pipeline/data/
 cd .next/standalone && PORT=3000 HOSTNAME=0.0.0.0 node server.js
 ```
-Dalej: domena `symantyka.pl` → Cloudflare (DNS + proxy), certyfikat SSL z Cloudflare.
-Monitoring: uptime check na `https://symantyka.pl/api/health`.
+Dalej: domena `semantyki.pl` → Cloudflare (DNS + proxy), certyfikat SSL z Cloudflare.
+Monitoring: uptime check na `https://semantyki.pl/api/health`.
 
 Monitoring działa na Cloudflare Workerze (`symantyka-monitor`, cron co 5 min) — alerty na
 Discord. Kod i instrukcje: `monitoring/README.md`.

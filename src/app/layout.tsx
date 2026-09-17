@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from "next";
 
 import "./globals.css";
 
-const SITE_URL = "https://symantyka.pl";
+const SITE_URL = "https://semantyki.pl";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "SYMANTYKA.pl — połącz słowa łańcuchem znaczeń",
-    template: "%s | SYMANTYKA.pl",
+    default: "SEMANTYKI.pl — połącz słowa łańcuchem znaczeń",
+    template: "%s | SEMANTYKI.pl",
   },
   description:
     "Darmowa polska gra słowna online. Połącz dwa losowe słowa łańcuchem wyrazów powiązanych znaczeniowo. Codzienna zagadka i tryb treningowy. Sprawdź, ile słów wystarczy, by połączyć „deszcz” z „muzyką”.",
@@ -26,9 +26,9 @@ export const metadata: Metadata = {
     "łamigłówka językowa",
     "nauka słów",
   ],
-  authors: [{ name: "SYMANTYKA.pl" }],
-  creator: "SYMANTYKA.pl",
-  publisher: "SYMANTYKA.pl",
+  authors: [{ name: "SEMANTYKI.pl" }],
+  creator: "SEMANTYKI.pl",
+  publisher: "SEMANTYKI.pl",
   alternates: {
     canonical: "/",
     languages: {
@@ -38,8 +38,8 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: SITE_URL,
-    siteName: "SYMANTYKA.pl",
-    title: "SYMANTYKA.pl — połącz słowa łańcuchem znaczeń",
+    siteName: "SEMANTYKI.pl",
+    title: "SEMANTYKI.pl — połącz słowa łańcuchem znaczeń",
     description:
       "Połącz dwa losowe polskie słowa, dopisując wyrazy powiązane znaczeniowo. Nowa zagadka codziennie, trening bez limitu.",
     locale: "pl_PL",
@@ -48,13 +48,13 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "SYMANTYKA.pl — polska gra słowna w łańcuchy znaczeń",
+        alt: "SEMANTYKI.pl — polska gra słowna w łańcuchy znaczeń",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "SYMANTYKA.pl — połącz słowa łańcuchem znaczeń",
+    title: "SEMANTYKI.pl — połącz słowa łańcuchem znaczeń",
     description:
       "Połącz dwa losowe polskie słowa, dopisując wyrazy powiązane znaczeniowo. Nowa zagadka codziennie.",
     images: ["/opengraph-image"],

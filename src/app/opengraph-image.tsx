@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "SYMANTYKA.pl — polska gra słowna w łańcuchy znaczeń";
+export const alt = "SEMANTYKI.pl — polska gra słowna w łańcuchy znaczeń";
 
 export default function OpengraphImage() {
   return new ImageResponse(
@@ -22,7 +22,7 @@ export default function OpengraphImage() {
         }}
       >
         <div style={{ display: "flex", fontSize: 84, letterSpacing: "0.1em" }}>
-          <span>SYMANTYKA</span>
+          <span>SEMANTYKI</span>
           <span style={{ color: "#1f6f5c" }}>.pl</span>
         </div>
         <div style={{ fontSize: 30, marginTop: 18, color: "#6f675c", fontStyle: "italic" }}>

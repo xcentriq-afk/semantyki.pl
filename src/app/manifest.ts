@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "SYMANTYKA.pl — łańcuchy znaczeń",
-    short_name: "SYMANTYKA.pl",
+    name: "SEMANTYKI.pl — łańcuchy znaczeń",
+    short_name: "SEMANTYKI.pl",
     description:
       "Polska gra słowna: połącz dwa słowa łańcuchem wyrazów powiązanych znaczeniowo.",
     start_url: "/",

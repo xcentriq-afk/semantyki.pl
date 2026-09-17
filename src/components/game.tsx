@@ -54,10 +54,11 @@ interface DragInfo {
   py: number;
 }
 
-const storageKey = (mode: Mode) => `symantyka.pl:state:${mode}`;
+const storageKey = (mode: Mode) => `semantyki.pl:state:${mode}`;
 const storageKeyPractice = (pos: string[]) =>
-  `symantyka.pl:state:practice:${pos.join("+")}`;
-const posStorageKey = "symantyka.pl:pos";
+  `semantyki.pl:state:practice:${pos.join("+")}`;
+const posStorageKey = "semantyki.pl:pos";
+const LEGACY_PREFIX = "symantyka.pl";
 const edgeKey = (a: string, b: string) => [a, b].sort().join("|");
 
 const DEFAULT_POS = ["rzeczownik", "przymiotnik"];
@@ -200,7 +201,8 @@ export default function Game() {
   const [dragging, setDragging] = useState<string | null>(null);
   const [posSelection, setPosSelection] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem(posStorageKey);
+      const saved =
+        localStorage.getItem(posStorageKey) ?? localStorage.getItem(`${LEGACY_PREFIX}:pos`);
       if (saved) return JSON.parse(saved) as string[];
     } catch {
       /* ignore */
@@ -271,8 +273,12 @@ export default function Game() {
   const fetchPuzzle = useCallback(
     async (m: Mode, fresh: boolean, pos: string[]) => {
       const key = m === "practice" ? storageKeyPractice(pos) : storageKey(m);
+      const legacyKey =
+        m === "practice"
+          ? `${LEGACY_PREFIX}:state:practice:${pos.join("+")}`
+          : `${LEGACY_PREFIX}:state:${m}`;
       if (!fresh) {
-        const saved = localStorage.getItem(key);
+        const saved = localStorage.getItem(key) ?? localStorage.getItem(legacyKey);
         if (saved) {
           try {
             const state = JSON.parse(saved) as SavedState;
@@ -280,6 +286,8 @@ export default function Game() {
             setNodes(state.nodes);
             setEdges(state.edges);
             setWon(state.won);
+            localStorage.setItem(key, saved);
+            localStorage.removeItem(legacyKey);
             return;
           } catch {
             /* ignore corrupted state */
@@ -653,7 +661,7 @@ export default function Game() {
     if (!puzzle) return;
     const chain = shortestChain(edges, puzzle.start, puzzle.target);
     const text =
-      `SYMANTYKA.pl · ${puzzle.date}\n` +
+      `SEMANTYKI.pl · ${puzzle.date}\n` +
       `Słowa pomostowe: ${Math.max(0, nodes.length - 2)}\n` +
       (chain.length > 0 ? `Łańcuch: ${chain.join(" → ")}` : "");
     try {
@@ -720,7 +728,7 @@ export default function Game() {
       <header className={styles.header}>
         <div className={styles.brandRow}>
           <h1 className={styles.brand}>
-            SYMANTYKA<span className={styles.brandAccent}>.pl</span>
+            SEMANTYKI<span className={styles.brandAccent}>.pl</span>
           </h1>
           <p className={styles.tagline}>Połącz dwa słowa łańcuchem znaczeń.</p>
         </div>
