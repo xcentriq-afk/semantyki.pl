@@ -86,6 +86,7 @@ def main():
                         "body": "Nocny backup pipeline/data (nadpisywany).",
                     }
                 ).encode(),
+                headers={"Content-Type": "application/json"},
             )
         rel_id = rel["id"]
 
