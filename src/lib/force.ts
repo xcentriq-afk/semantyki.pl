@@ -8,6 +8,8 @@ export interface SimNode {
   anchorX: number | null;
   anchorY: number | null;
   strength: number;
+  followIndex: number | null;
+  followStrength: number;
 }
 
 export function tick(
@@ -68,6 +70,13 @@ export function tick(
     } else {
       n.vx += (w / 2 - n.x) * centerPull;
       n.vy += (h / 2 - n.y) * centerPull;
+    }
+    if (n.followIndex !== null) {
+      const parent = nodes[n.followIndex];
+      if (parent) {
+        n.vx += (parent.x - n.x) * n.followStrength;
+        n.vy += (parent.y - n.y) * n.followStrength;
+      }
     }
     n.x += n.vx;
     n.y += n.vy;

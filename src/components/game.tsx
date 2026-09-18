@@ -155,6 +155,45 @@ function semanticAnchor(
   return null;
 }
 
+function pickParent(
+  word: string,
+  nodes: BoardNode[],
+  edges: Edge[],
+  dS: Map<string, number>,
+  dT: Map<string, number>,
+): { index: number; strength: number; score: number } | null {
+  const ds = dS.get(word);
+  const dt = dT.get(word);
+  if (ds === undefined && dt === undefined) return null;
+  const dir: "start" | "goal" =
+    ds !== undefined && dt !== undefined
+      ? ds < dt
+        ? "start"
+        : "goal"
+      : ds !== undefined
+        ? "start"
+        : "goal";
+  let best: { index: number; val: number; score: number } | null = null;
+  for (const e of edges) {
+    if (e.from !== word && e.to !== word) continue;
+    const nb = e.from === word ? e.to : e.from;
+    const ni = nodes.findIndex((n) => n.word === nb);
+    if (ni < 0) continue;
+    const d = dir === "start" ? ds : dt;
+    const nd = dir === "start" ? dS.get(nb) : dT.get(nb);
+    let bonus = 1;
+    if (nd !== undefined && d !== undefined) {
+      if (nd < d) bonus = 2;
+      else if (nd > d) bonus = 0.5;
+    }
+    const val = e.score * bonus;
+    if (!best || val > best.val) best = { index: ni, val, score: e.score };
+  }
+  if (!best) return null;
+  const strength = Math.min(0.045, Math.max(0.015, 0.015 + (best.score - 0.32) * 0.05));
+  return { index: best.index, strength, score: best.score };
+}
+
 function shortestChain(edges: Edge[], start: string, target: string): string[] {
   const adj = new Map<string, string[]>();
   for (const e of edges) {
@@ -366,6 +405,8 @@ export default function Game() {
       let anchorX: number | null;
       let anchorY: number | null;
       let strength: number;
+      let followIndex: number | null = null;
+      let followStrength = 0;
       if (isStart) {
         anchorX = dims.w * 0.14;
         anchorY = dims.h * 0.2;
@@ -388,15 +429,24 @@ export default function Game() {
           floatIdx += 1;
         }
       } else {
-        const sem = semanticAnchor(n.word, dS, dT, dims.w, dims.h);
-        if (sem) {
-          anchorX = sem.x;
-          anchorY = sem.y;
-          strength = 0.03;
-        } else {
+        const par = pickParent(n.word, nodes, edges, dS, dT);
+        if (par) {
           anchorX = null;
           anchorY = null;
           strength = 0;
+          followIndex = par.index;
+          followStrength = par.strength;
+        } else {
+          const sem = semanticAnchor(n.word, dS, dT, dims.w, dims.h);
+          if (sem) {
+            anchorX = sem.x;
+            anchorY = sem.y;
+            strength = 0.03;
+          } else {
+            anchorX = null;
+            anchorY = null;
+            strength = 0;
+          }
         }
       }
       const x = p ? clampX(p.x) : anchorX !== null ? anchorX : clampX(Math.random() * dims.w);
@@ -411,6 +461,8 @@ export default function Game() {
         anchorX,
         anchorY,
         strength,
+        followIndex,
+        followStrength,
       };
     });
     const simEdges: [number, number][] = edges
@@ -580,10 +632,21 @@ export default function Game() {
         const semDS = bfsDist(semAdj, puzzle.start);
         const semDT = bfsDist(semAdj, puzzle.target);
         const sem = semanticAnchor(w, semDS, semDT, dims.w, dims.h);
+        const strongest = matchList[0] ?? null;
+        const anchorNb = strongest ? nodes.find((n) => n.word === strongest.word) : null;
+        const hsh = hashWord(w);
         const newNode: BoardNode = {
           word: w,
-          x: sem ? sem.x : dims.w / 2 + (Math.random() - 0.5) * 120,
-          y: sem ? sem.y : dims.h / 2 + (Math.random() - 0.5) * 120,
+          x: anchorNb
+            ? anchorNb.x + ((hsh % 40) - 20)
+            : sem
+              ? sem.x
+              : dims.w / 2 + (Math.random() - 0.5) * 120,
+          y: anchorNb
+            ? anchorNb.y + (((hsh >> 5) % 40) - 20)
+            : sem
+              ? sem.y
+              : dims.h / 2 + (Math.random() - 0.5) * 120,
         };
         const allWords = [...nodes.map((n) => n.word), w];
         const uf = new UnionFind(allWords);
