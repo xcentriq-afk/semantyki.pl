@@ -259,6 +259,7 @@ export default function Game() {
   const simRef = useRef<{ nodes: SimNode[]; edges: [number, number][] } | null>(null);
   const dragRef = useRef<DragInfo | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const midnightFetched = useRef(false);
 
   const showFeedback = useCallback((text: string, kind: "info" | "warn" = "info") => {
     setFeedback({ text, kind });
@@ -316,7 +317,7 @@ export default function Game() {
         m === "practice"
           ? `${LEGACY_PREFIX}:state:practice:${pos.join("+")}`
           : `${LEGACY_PREFIX}:state:${m}`;
-      if (!fresh) {
+      if (!fresh && m === "practice") {
         const saved = localStorage.getItem(key) ?? localStorage.getItem(legacyKey);
         if (saved) {
           try {
@@ -349,6 +350,25 @@ export default function Game() {
         }
       }
       const data = (await res.json()) as Puzzle;
+      if (!fresh && m === "daily") {
+        const saved = localStorage.getItem(key) ?? localStorage.getItem(legacyKey);
+        if (saved) {
+          try {
+            const state = JSON.parse(saved) as SavedState;
+            if (state.start === data.start && state.target === data.target) {
+              setPuzzle({ start: state.start, target: state.target, date: state.date });
+              setNodes(state.nodes);
+              setEdges(state.edges);
+              setWon(state.won);
+              localStorage.setItem(key, saved);
+              localStorage.removeItem(legacyKey);
+              return;
+            }
+          } catch {
+            /* ignore corrupted state */
+          }
+        }
+      }
       setPuzzle(data);
       setNodes([
         { word: data.start, start: true, x: 0, y: 0 },
@@ -357,6 +377,7 @@ export default function Game() {
       setEdges([]);
       setWon(false);
       localStorage.removeItem(key);
+      localStorage.removeItem(legacyKey);
     },
     [showFeedback],
   );
@@ -765,6 +786,15 @@ export default function Game() {
     const mm = Math.floor((ms % 3600000) / 60000);
     return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
   }, [now]);
+
+  useEffect(() => {
+    if (mode !== "daily" || !puzzle || countdown !== "00:00") return;
+    if (midnightFetched.current) return;
+    midnightFetched.current = true;
+    void fetchPuzzle("daily", true, DEFAULT_POS).finally(() => {
+      midnightFetched.current = false;
+    });
+  }, [mode, puzzle, countdown, fetchPuzzle]);
 
   const nodeById = useMemo(() => {
     const map = new Map<string, BoardNode>();
