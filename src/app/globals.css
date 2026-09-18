@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --paper: #f7f3e9;
   --ink: #2b2620;
   --ink-soft: #6f675c;
@@ -6,11 +7,36 @@
   --accent: #1f6f5c;
   --accent-deep: #175646;
   --danger: #8c2f39;
+  --surface: #ffffff;
+  --on-accent: #ffffff;
+  --paper-glass: rgba(247, 243, 233, 0.85);
+  --paper-glass-strong: rgba(247, 243, 233, 0.9);
+  --shadow: rgba(43, 38, 32, 0.12);
+  --shadow-strong: rgba(43, 38, 32, 0.25);
+  --veil: rgba(43, 38, 32, 0.45);
   --font-display: Georgia, "Times New Roman", serif;
   --font-words: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
   --font-ui:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
     Arial, sans-serif;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #17140f;
+  --ink: #e8e0d2;
+  --ink-soft: #a89f8e;
+  --line: #3a332a;
+  --accent: #4fc4a4;
+  --accent-deep: #7fd6bb;
+  --danger: #e07980;
+  --surface: #211d17;
+  --on-accent: #0d1f19;
+  --paper-glass: rgba(23, 20, 15, 0.85);
+  --paper-glass-strong: rgba(23, 20, 15, 0.92);
+  --shadow: rgba(0, 0, 0, 0.45);
+  --shadow-strong: rgba(0, 0, 0, 0.6);
+  --veil: rgba(0, 0, 0, 0.55);
 }
 
 * {
@@ -28,4 +54,45 @@ body {
   color: var(--ink);
   font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;
+}
+
+.themeToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  padding: 0;
+  line-height: 0;
+}
+
+.themeToggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.themeToggle svg {
+  width: 17px;
+  height: 17px;
+}
+
+.themeToggle .sun {
+  display: none;
+}
+
+.themeToggle .moon {
+  display: block;
+}
+
+:root[data-theme="dark"] .themeToggle .sun {
+  display: block;
+}
+
+:root[data-theme="dark"] .themeToggle .moon {
+  display: none;
 }

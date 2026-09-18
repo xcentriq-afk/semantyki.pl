@@ -63,7 +63,7 @@ export default function Home() {
       <Game />
       <main className={styles.wrap}>
         <section className={styles.info} aria-label="Jak grać">
-          <h2 className={styles.h2}>Jak grać w SYMANTYKĘ?</h2>
+          <h2 className={styles.h2}>Jak grać w SEMANTYKI?</h2>
           <ol className={styles.steps}>
             <li>
               Zobaczysz dwa słowa: <strong>start</strong> i <strong>cel</strong> — na pozór

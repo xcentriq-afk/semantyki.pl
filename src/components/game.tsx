@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { tick, type SimNode } from "@/lib/force";
 import { UnionFind } from "@/lib/unionfind";
+import ThemeToggle from "./theme-toggle";
 import styles from "./game.module.css";
 
 type Mode = "daily" | "practice";
@@ -852,6 +853,7 @@ export default function Game() {
             <span className={styles.wordCount}>
               Słowa: {Math.max(0, nodes.length - 2)}
             </span>
+            <ThemeToggle />
           </div>
         </div>
       </header>

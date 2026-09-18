@@ -3,8 +3,8 @@
   flex-direction: column;
   height: 100dvh;
   background:
-    radial-gradient(circle at 20% 10%, rgba(31, 111, 92, 0.05), transparent 40%),
-    radial-gradient(circle at 85% 90%, rgba(140, 47, 57, 0.05), transparent 40%),
+    radial-gradient(circle at 20% 10%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 40%),
+    radial-gradient(circle at 85% 90%, color-mix(in srgb, var(--danger) 6%, transparent), transparent 40%),
     var(--paper);
 }
 
@@ -14,7 +14,7 @@
   gap: 10px;
   padding: 14px 18px 10px;
   border-bottom: 1px solid var(--line);
-  background: rgba(247, 243, 233, 0.85);
+  background: var(--paper-glass);
   backdrop-filter: blur(6px);
   z-index: 5;
 }
@@ -74,7 +74,7 @@
 .tabActive {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .stats {
@@ -90,7 +90,7 @@
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 4px 12px;
-  background: #fff;
+  background: var(--surface);
 }
 
 .countdown {
@@ -103,7 +103,7 @@
   padding: 4px 12px;
   border-radius: 999px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--surface);
   color: var(--ink);
   cursor: pointer;
 }
@@ -148,7 +148,7 @@
 }
 
 .removeBtnCircle {
-  fill: #fff;
+  fill: var(--surface);
   stroke: var(--ink-soft);
   stroke-width: 1.2;
 }
@@ -166,7 +166,7 @@
 }
 
 .removeBtn:hover .removeBtnCross {
-  stroke: #fff;
+  stroke: var(--surface);
 }
 
 .edge {
@@ -211,7 +211,7 @@
 }
 
 .node {
-  fill: #fff;
+  fill: var(--surface);
   stroke: var(--ink);
   stroke-width: 1.4;
   animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -229,7 +229,7 @@
 }
 
 .nodeFloating {
-  fill: #fff;
+  fill: var(--surface);
   stroke: var(--ink-soft);
   stroke-width: 1.2;
   stroke-dasharray: 5 4;
@@ -259,7 +259,7 @@
 }
 
 .nodeAnchor + .nodeText {
-  fill: #fff;
+  fill: var(--surface);
 }
 
 .nodeFloating + .nodeText {
@@ -280,7 +280,7 @@
   position: relative;
   padding: 8px 18px 14px;
   border-top: 1px solid var(--line);
-  background: rgba(247, 243, 233, 0.9);
+  background: var(--paper-glass-strong);
   backdrop-filter: blur(6px);
   z-index: 5;
 }
@@ -307,7 +307,7 @@
   padding: 12px 18px;
   border-radius: 999px;
   border: 1.5px solid var(--line);
-  background: #fff;
+  background: var(--surface);
   color: var(--ink);
   outline: none;
 }
@@ -327,7 +327,7 @@
   border-radius: 999px;
   border: none;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   cursor: pointer;
 }
 
@@ -348,10 +348,10 @@
   margin: 0;
   padding: 6px;
   list-style: none;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(43, 38, 32, 0.12);
+  box-shadow: 0 8px 24px var(--shadow);
   max-height: 220px;
   overflow-y: auto;
 }
@@ -385,9 +385,9 @@
   max-width: min(560px, calc(100vw - 32px));
   padding: 8px 18px;
   border-radius: 999px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
-  box-shadow: 0 8px 24px rgba(43, 38, 32, 0.14);
+  box-shadow: 0 8px 24px var(--shadow);
   text-align: center;
   font-size: 0.88rem;
   color: var(--accent-deep);
@@ -405,7 +405,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(43, 38, 32, 0.45);
+  background: var(--veil);
   z-index: 20;
   padding: 20px;
 }
@@ -418,7 +418,7 @@
   max-width: 460px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 18px 50px rgba(43, 38, 32, 0.25);
+  box-shadow: 0 18px 50px var(--shadow-strong);
 }
 
 .winTitle {
@@ -462,7 +462,7 @@
 .primaryBtn {
   border: none;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .primaryBtn:hover {
