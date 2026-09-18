@@ -125,6 +125,7 @@ def main():
                     pass
         print(f"OK {ASSET} ({size_mb:.1f} MB)")
     except Exception as e:
+        print(f"{type(e).__name__}: {e}", file=sys.stderr)
         alert(f"Backup SEMANTYKI.pl NIE UDAŁ SIĘ: {type(e).__name__}: {e}")
         sys.exit(1)
     finally:
