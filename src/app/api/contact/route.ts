@@ -53,6 +53,10 @@ export async function POST(req: NextRequest) {
   if (globalHits.length >= GLOBAL_CAP) {
     return Response.json({ ok: false, error: "rate" }, { status: 429 });
   }
+  // Każda próba liczy się do limitu (także nieudana CAPTCHA).
+  mine.push(now);
+  hits.set(ip, mine);
+  globalHits.push(now);
 
   const secret = process.env.TURNSTILE_SECRET;
   if (!secret || !token) {
@@ -101,10 +105,6 @@ export async function POST(req: NextRequest) {
   if (!send.ok) {
     return Response.json({ ok: false, error: "send" }, { status: 502 });
   }
-
-  mine.push(now);
-  hits.set(ip, mine);
-  globalHits.push(now);
 
   return Response.json({ ok: true });
 }
