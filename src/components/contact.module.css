@@ -1,0 +1,84 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 560px;
+}
+
+.textarea {
+  font: inherit;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  resize: vertical;
+  min-height: 96px;
+  outline: none;
+}
+
+.textarea:focus {
+  border-color: var(--accent);
+}
+
+.hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.counter {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.submit {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 10px 22px;
+  min-height: 44px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--accent-deep);
+}
+
+.submit:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.widget {
+  min-height: 4px;
+}
+
+.statusOk {
+  margin: 2px 0 0;
+  font-size: 0.9rem;
+  color: var(--accent-deep);
+}
+
+.statusErr {
+  margin: 2px 0 0;
+  font-size: 0.9rem;
+  color: var(--danger);
+}

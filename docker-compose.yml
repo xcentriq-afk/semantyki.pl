@@ -4,6 +4,10 @@ services:
     restart: always
     ports:
       - "80:3000"
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - TURNSTILE_SECRET=${TURNSTILE_SECRET}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
       interval: 60s

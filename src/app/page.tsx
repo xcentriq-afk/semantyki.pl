@@ -1,4 +1,5 @@
 import Game from "@/components/game";
+import ContactForm from "@/components/contact-form";
 import styles from "./landing.module.css";
 
 const FAQ = [
@@ -101,6 +102,16 @@ export default function Home() {
               </details>
             ))}
           </div>
+        </section>
+
+        <section className={styles.info} aria-label="Kontakt">
+          <h2 className={styles.h2}>Kontakt</h2>
+          <p className={styles.lead}>
+            Masz pomysł, znalazłeś błąd albo chcesz coś powiedzieć? Wyślij wiadomość —
+            trafi wprost na Telegram twórcy. Z jednego adresu można wysłać do 3 wiadomości
+            na godzinę (max 500 znaków).
+          </p>
+          <ContactForm />
         </section>
       </main>
       <footer className={styles.footer}>
