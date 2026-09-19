@@ -818,6 +818,8 @@ export default function Game() {
     return d ? [...rest, d] : nodes;
   }, [nodes, dragging]);
 
+  const uiScale = dims.w < 520 || dims.h < 400 ? 0.8 : 1;
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -899,7 +901,7 @@ export default function Game() {
             );
           })}
           {orderedNodes.map((n) => {
-            const w = n.word.length * 8.8 + 30;
+            const w = (n.word.length * 8.8 + 30) * uiScale;
             const floaty = isFloating(n.word);
             const cls =
               n.start || n.target
@@ -919,23 +921,48 @@ export default function Game() {
                 }
               >
                 {n.start && (
-                  <text className={styles.nodeLabel} x={0} y={-32} textAnchor="middle">
+                  <text
+                    className={styles.nodeLabel}
+                    x={0}
+                    y={-32 * uiScale}
+                    textAnchor="middle"
+                    style={{ fontSize: 12 * uiScale }}
+                  >
                     start
                   </text>
                 )}
                 {n.target && (
-                  <text className={styles.nodeLabel} x={0} y={-32} textAnchor="middle">
+                  <text
+                    className={styles.nodeLabel}
+                    x={0}
+                    y={-32 * uiScale}
+                    textAnchor="middle"
+                    style={{ fontSize: 12 * uiScale }}
+                  >
                     cel
                   </text>
                 )}
-                <rect className={cls} x={-w / 2} y={-24} width={w} height={48} rx={24} />
-                <text className={styles.nodeText} x={0} y={5} textAnchor="middle">
+                <rect
+                  className={cls}
+                  x={-w / 2}
+                  y={-24 * uiScale}
+                  width={w}
+                  height={48 * uiScale}
+                  rx={24 * uiScale}
+                />
+                <text
+                  className={styles.nodeText}
+                  x={0}
+                  y={5 * uiScale}
+                  textAnchor="middle"
+                  style={{ fontSize: 17 * uiScale }}
+                >
                   {n.word}
                 </text>
                 {draggable && (
                   <g
                     className={styles.removeBtn}
-                    transform={`translate(${w / 2 - 2}, ${-36})`}
+                    transform={`translate(${w / 2 - 2 * uiScale}, ${-36 * uiScale})`}
                     role="button"
                     tabIndex={0}
                     aria-label={`Usuń „${n.word}”`}
@@ -954,8 +981,12 @@ export default function Game() {
                       }
                     }}
                   >
-                    <circle className={styles.removeBtnCircle} r={11} />
-                    <path className={styles.removeBtnCross} d="M -4 -4 L 4 4 M 4 -4 L -4 4" />
+                    <circle className={styles.removeBtnHit} r={18 * uiScale} />
+                    <circle className={styles.removeBtnCircle} r={11 * uiScale} />
+                    <path
+                      className={styles.removeBtnCross}
+                      d={`M ${-4 * uiScale} ${-4 * uiScale} L ${4 * uiScale} ${4 * uiScale} M ${4 * uiScale} ${-4 * uiScale} L ${-4 * uiScale} ${4 * uiScale}`}
+                    />
                   </g>
                 )}
               </g>

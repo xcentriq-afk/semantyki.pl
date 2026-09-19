@@ -153,6 +153,12 @@
   stroke-width: 1.2;
 }
 
+.removeBtnHit {
+  fill: transparent;
+  stroke: none;
+  pointer-events: all;
+}
+
 .removeBtn:hover .removeBtnCircle {
   fill: var(--danger);
   stroke: var(--danger);
@@ -537,21 +543,137 @@
 
 @media (max-width: 640px) {
   .header {
-    padding: 10px 12px 8px;
+    padding: 8px 10px 6px;
+    gap: 6px;
   }
   .brand {
-    font-size: 1.3rem;
+    font-size: 1.15rem;
   }
   .tagline {
     display: none;
   }
-  .nodeText {
-    font-size: 15px;
+  .toolbar {
+    gap: 8px;
+  }
+  .tabs {
+    gap: 4px;
+  }
+  .tab,
+  .tabActive {
+    font-size: 0.8rem;
+    padding: 5px 11px;
+  }
+  .stats {
+    gap: 8px;
+    font-size: 0.78rem;
+    flex-wrap: wrap;
+  }
+  .wordCount {
+    padding: 3px 9px;
+  }
+  .newGame {
+    font-size: 0.8rem;
+    padding: 3px 10px;
   }
   .hint {
     display: none;
   }
   .footer {
-    padding: 8px 12px 12px;
+    padding: 6px 10px calc(10px + env(safe-area-inset-bottom));
+  }
+  .input {
+    font-size: 1rem;
+    padding: 10px 14px;
+  }
+  .submit {
+    font-size: 0.9rem;
+    padding: 10px 16px;
+  }
+  .suggestions {
+    max-height: 160px;
+    border-radius: 12px;
+  }
+  .suggestions button {
+    font-size: 0.95rem;
+    padding: 9px 12px;
+  }
+  .feedback,
+  .feedbackWarn {
+    font-size: 0.82rem;
+    padding: 7px 14px;
+    max-width: min(560px, calc(100vw - 24px));
+  }
+  .overlay {
+    padding: 14px;
+  }
+  .card {
+    padding: 20px 18px;
+    max-width: min(92vw, 460px);
+    border-radius: 16px;
+  }
+  .winTitle {
+    font-size: 1.4rem;
+  }
+  .winStats {
+    font-size: 0.9rem;
+  }
+  .winChain {
+    font-size: 0.85rem;
+  }
+  .winActions {
+    gap: 8px;
+  }
+  .primaryBtn,
+  .ghostBtn {
+    padding: 11px 18px;
+    font-size: 0.9rem;
+    min-height: 44px;
+  }
+  .winCountdown {
+    font-size: 0.78rem;
+  }
+  .posTitle {
+    font-size: 1.2rem;
+  }
+  .posHint {
+    font-size: 0.82rem;
+  }
+  .posItem {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .brand {
+    font-size: 1.05rem;
+  }
+  .stats {
+    gap: 6px;
+  }
+  .countdown {
+    font-size: 0.75rem;
+  }
+  .tab,
+  .tabActive {
+    padding: 4px 9px;
+  }
+  .posItems {
+    gap: 4px 10px;
+  }
+  .card {
+    padding: 18px 14px;
+  }
+}
+
+@media (max-height: 560px) {
+  .header {
+    padding: 6px 10px 4px;
+    gap: 4px;
+  }
+  .brand {
+    font-size: 1rem;
+  }
+  .footer {
+    padding: 4px 10px calc(8px + env(safe-area-inset-bottom));
   }
 }
